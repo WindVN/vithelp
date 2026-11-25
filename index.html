@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="vi">
-<!-- Vit Tracker v49: Studio redesign + auto-sync, no finish toggle -->
+<!-- Vit Tracker v49.1: v49 + auto-retry Firestore initial sync on client-offline -->
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -455,6 +455,7 @@ input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-
   .hero-nav,.sw,.btn,.bike-card{transition:none!important}
 }
 
+#syncStatus{cursor:pointer}
 </style>
 </head>
 <body>
@@ -776,7 +777,7 @@ function load(key, fallback){ try{ var v=localStorage.getItem(key); return v?JSO
 function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} if(isDataKey(key)) markLocalChange(); }
 var LS_SYNC="vision110_sync_v1";
 var SYNC_MAX_BYTES=800000;
-var syncTimer=null, syncInFlight=false, syncInitDoneFor=null, syncStatusText="", lastCloudCheckAt=0, applyingCloud=false;
+var syncTimer=null, syncInFlight=false, syncInitDoneFor=null, syncStatusText="", lastCloudCheckAt=0, applyingCloud=false, syncRetryTimer=null, syncRetryCount=0;
 function isDataKey(k){
   if(!k) return false;
   if(k===LS_BIKES||k===LS_ACTIVE_BIKE||k===LS_WEIGHT||k===LS_HSET||k===LS_FOODLOG) return true;
@@ -2806,7 +2807,7 @@ function initialSync(force){
   setSyncStatus("Đang kiểm tra dữ liệu cloud…");
   var st=syncState();
   var localDirty=!!(st.lastLocalChangeAt&&st.updatedAt&&st.lastLocalChangeAt>st.updatedAt);
-  cloudCol().doc("meta").get().then(function(doc){
+  cloudCol().doc("meta").get().then(function(doc){ syncRetryCount=0;
     if(!doc.exists) return cloudCol().doc("latest").get().then(function(latest){
       if(!latest.exists){
         if(localHasData()) return uploadSync();
@@ -2827,7 +2828,19 @@ function initialSync(force){
     if(localDirty) return fetchSyncParts(meta.parts||[]).then(function(p){ applySyncData(p, cloudAt); setSyncStatus("Đã đồng bộ "+fmtDateTime(cloudAt)+"."); toast("Đã lấy dữ liệu mới nhất từ cloud"); });
     setSyncStatus(st.updatedAt? "Đã đồng bộ "+fmtDateTime(st.updatedAt)+"." : "Đã đồng bộ.");
     return false;
-  }).catch(function(err){ setSyncStatus("Chưa kiểm tra được cloud: "+fbError(err), true); });
+  }).catch(function(err){
+    var off=(err&&err.message&&err.message.indexOf("client is offline")>=0)||(err&&err.code==="unavailable");
+    if(off&&syncRetryCount<3){
+      syncRetryCount++;
+      setSyncStatus("Mất kết nối Firestore, đang thử lại lần "+syncRetryCount+"…");
+      try{ fbDb.enableNetwork(); }catch(e){}
+      if(syncRetryTimer) clearTimeout(syncRetryTimer);
+      syncRetryTimer=setTimeout(function(){ syncInitDoneFor=null; initialSync(true); }, syncRetryCount===1?10000:(syncRetryCount===2?20000:40000));
+      return;
+    }
+    syncRetryCount=0; syncInitDoneFor=null;
+    setSyncStatus("Chưa kiểm tra được cloud: "+fbError(err)+" Chạm vào đây để thử lại.", true);
+  });
 }
 document.addEventListener("visibilitychange", function(){
   if(document.hidden) return;
@@ -2839,6 +2852,12 @@ document.addEventListener("visibilitychange", function(){
 });
 window.addEventListener("online", function(){ if(cloudAllowed()&&fbDb) initialSync(true); });
 window.addEventListener("pagehide", function(){ if(cloudAllowed()&&fbDb){ var s=syncState(); if(s.lastLocalChangeAt>(s.updatedAt||"")) uploadSync(); } });
+document.getElementById("syncStatus").addEventListener("click", function(){
+  if(!cloudAllowed()||!fbDb) return;
+  syncRetryCount=0; if(syncRetryTimer){ clearTimeout(syncRetryTimer); syncRetryTimer=null; }
+  setSyncStatus("Đang kiểm tra dữ liệu cloud…");
+  initialSync(true);
+});
 
 /* ---------- Đổi tên xe (bấm vào tên) ---------- */
 function startBikeRename(el){
