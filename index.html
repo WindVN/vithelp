@@ -437,6 +437,20 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
 .exp-pay.unpaid{color:#ff6b61;border-color:rgba(255,107,97,.55);background:rgba(255,107,97,.08)}
 .exp-pay.paid{color:#43b581;border-color:rgba(67,181,129,.55);background:rgba(67,181,129,.10)}
 .exp-del{flex:none}
+.person-row{display:flex;gap:8px;align-items:center}
+.person-row input{flex:1;min-width:0}
+.person-row select{max-width:132px}
+.person-row .btn{flex:none;min-height:44px;padding:0 12px;font-size:14px}
+.exp-sub{font-size:12px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-row.settled .exp-amt{text-decoration:line-through;opacity:.55}
+.exp-row.settled .exp-name{opacity:.6}
+.inv-item{padding:10px 0;border-bottom:1px solid var(--line)}
+.inv-item:last-child{border-bottom:0}
+.inv-row{display:flex;gap:10px;align-items:center}
+.inv-thumb{width:48px;height:48px;object-fit:cover;border-radius:10px;flex:none;background:var(--glass)}
+.inv-fields{flex:1;min-width:0;display:grid;gap:6px}
+.inv-fields input{min-height:42px;padding:0 12px;font-size:14.5px}
+.inv-status{font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -748,6 +762,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
       <div class="stat"><div class="v mono" id="expStatUnpaid">0 đ</div><div class="l">Chưa trả</div></div>
     </div>
     <div class="home-cta"><button type="button" class="btn btn-red btn-block" id="ctaExpense">Thêm khoản chi</button></div>
+    <div class="home-cta"><button type="button" class="btn btn-line btn-block" id="ctaRepay" style="margin-top:10px">Ghi nhận trả tiền</button></div>
     <div class="card">
       <h3 style="margin:0 0 6px;font-size:15.5px">Sổ chi tiêu</h3>
       <div class="exp-head"><span>#</span><span>Tên đầu mục</span><span>Giá tiền</span><span>Ngày</span><span>Thanh toán</span><span></span></div>
@@ -877,15 +892,60 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
             <button type="button" data-kind="vay">Cho vay</button>
           </div>
         </div>
-        <input type="file" id="expPhoto" accept="image/*" hidden />
-        <button type="button" class="btn btn-line btn-block" id="expPhotoBtn" style="margin-top:12px">Chụp ảnh hóa đơn</button>
-        <div class="photo-prev" id="expPhotoPrev">
-          <img id="expPhotoImg" alt="Ảnh hóa đơn vừa chụp" />
-          <div class="pp-meta"><b>Đã đính kèm ảnh</b><br /><span id="expPhotoMeta"></span></div>
-          <button type="button" class="icon-btn danger" id="expPhotoRemove">Bỏ ảnh</button>
+        <div id="expPersonRow" style="margin-top:10px" hidden>
+          <label class="f" for="expPerson">Tên người vay</label>
+          <div class="person-row">
+            <input type="text" id="expPerson" placeholder="Ví dụ: Nam" autocomplete="off" />
+            <select id="expPersonSel" aria-label="Chọn tên đã lưu"></select>
+            <button type="button" class="btn btn-line" id="expPersonSave" title="Ghi nhớ tên này">＋ Lưu tên</button>
+          </div>
         </div>
-        <button type="submit" class="btn btn-red btn-block" style="margin-top:12px">Lưu khoản chi</button>
+        <input type="file" id="expPhoto" accept="image/*" multiple hidden />
+        <button type="button" class="btn btn-line btn-block" id="expPhotoBtn" style="margin-top:12px">Chụp / chọn ảnh hóa đơn (nhiều ảnh)</button>
+        <div id="expInvoiceList"></div>
+        <div class="ocr-status" id="expOcrStatus"></div>
+        <button type="submit" class="btn btn-red btn-block" id="expSubmitBtn" style="margin-top:12px">Lưu khoản chi</button>
       </form>
+    </div>
+  </div>
+
+<div class="sheet" id="sheet-repay" role="dialog" aria-modal="true" aria-label="Ghi nhận trả tiền">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Ghi nhận trả tiền</h3><button type="button" class="sheet-close" data-close aria-label="Đóng">×</button></div>
+    <div class="sheet-body">
+      <form id="repayForm">
+        <div>
+          <label class="f" for="repayPerson">Tên người trả</label>
+          <div class="person-row">
+            <input type="text" id="repayPerson" placeholder="Ví dụ: Nam" autocomplete="off" />
+            <select id="repayPersonSel" aria-label="Chọn tên đã lưu"></select>
+            <button type="button" class="btn btn-line" id="repayPersonSave" title="Ghi nhớ tên này">＋ Lưu tên</button>
+          </div>
+          <div class="hint" id="repayOwed" style="margin-top:6px"></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label class="f" for="repayAmount">Số tiền trả (đ)</label>
+            <input type="text" id="repayAmount" inputmode="numeric" placeholder="Ví dụ: 100000" required />
+          </div>
+          <div>
+            <label class="f" for="repayDate">Ngày</label>
+            <input type="date" id="repayDate" required />
+          </div>
+        </div>
+        <input type="file" id="repayPhoto" accept="image/*" hidden />
+        <button type="button" class="btn btn-line btn-block" id="repayPhotoBtn" style="margin-top:12px">Chụp ảnh chuyển khoản</button>
+        <div class="photo-prev" id="repayPhotoPrev">
+          <img id="repayPhotoImg" alt="Ảnh chuyển khoản vừa chụp" />
+          <div class="pp-meta"><b>Đã đính kèm ảnh</b><br /><span id="repayPhotoMeta"></span></div>
+          <button type="button" class="icon-btn danger" id="repayPhotoRemove">Bỏ ảnh</button>
+        </div>
+        <button type="submit" class="btn btn-red btn-block" style="margin-top:12px">Lưu trả tiền</button>
+      </form>
+      <div class="card" style="margin-top:14px">
+        <h3 style="margin:0 0 6px;font-size:15.5px">Lịch sử trả tiền</h3>
+        <div id="repayList"></div>
+      </div>
     </div>
   </div>
 
@@ -905,7 +965,7 @@ var SYNC_MAX_BYTES=800000;
 var syncTimer=null, syncInFlight=false, syncInitDoneFor=null, syncStatusText="", lastCloudCheckAt=0, applyingCloud=false, syncRetryTimer=null, syncRetryCount=0;
 function isDataKey(k){
   if(!k) return false;
-  if(k===LS_BIKES||k===LS_ACTIVE_BIKE||k===LS_WEIGHT||k===LS_HSET||k===LS_FOODLOG||k===LS_EXPENSE) return true;
+  if(k===LS_BIKES||k===LS_ACTIVE_BIKE||k===LS_WEIGHT||k===LS_HSET||k===LS_FOODLOG||k===LS_EXPENSE||k===LS_EXP_NAMES||k===LS_EXP_PAYMENTS) return true;
   if(k==="vision110_goals_v1") return true;
   return k.indexOf(LS_ODO)===0||k.indexOf(LS_MAINT)===0||k.indexOf(LS_HIST)===0;
 }
@@ -2161,7 +2221,12 @@ if(!ACT_FACTOR[hSettings.activity]) hSettings.activity="light";
 
 var weightEntries = load(LS_WEIGHT, []);
 var editingWeightId = null;
-var pendingWeightPhoto = makePending(); var expenseList = load(LS_EXPENSE, []); var pendingExpensePhoto = makePending();
+var pendingWeightPhoto = makePending(); var expenseList = load(LS_EXPENSE, []);
+var LS_EXP_NAMES="vision110_expense_names_v1", LS_EXP_PAYMENTS="vision110_expense_payments_v1";
+var expNames=load(LS_EXP_NAMES, []), expPayments=load(LS_EXP_PAYMENTS, []);
+var invoiceDrafts=[];
+expenseList.forEach(function(e){ normalizeExpense(e); });
+applyRepayments();
 
 function sortedWeight(){ return weightEntries.slice().sort(function(a,b){ return a.date<b.date ? -1 : a.date>b.date ? 1 : a.id-b.id; }); }
 function latestWeight(){ var s=sortedWeight(); return s.length ? s[s.length-1] : null; }
@@ -2559,7 +2624,7 @@ document.getElementById("healthSettingsForm").addEventListener("submit", functio
 
 /* ---------- Render ---------- */
 function renderHealth(){ renderTodayWeight(); renderBMI(); renderPredict(); renderGoal(); renderCalo(); renderWeightList(); }
-function renderAll(){ renderOdo(); renderMaint(); renderHealth(); renderExpense(); }
+function renderAll(){ renderOdo(); renderMaint(); renderHealth(); renderExpense(); renderRepayList(); refreshPersonSelects(); }
 
 /* ---------- Đăng nhập (gate) + FaceID + đồng bộ cloud tự động ---------- */
 var FB_CONFIG={apiKey:"AIzaSyA9RxYEDL3McHN7AR76oOw7ipyrCDzhcMs",authDomain:"passwordkeys.firebaseapp.com",projectId:"passwordkeys",storageBucket:"passwordkeys.firebasestorage.app",messagingSenderId:"558749117542",appId:"1:558749117542:web:5f58e3333bdfbc39a8d1a7",measurementId:"G-J80M4QQ4ZE"};
@@ -2879,7 +2944,7 @@ function buildSyncParts(){
     odo:{odoByBike:ob, odo:ob[DEFAULT_BIKE_ID]||[]},
     maint:{maintByBike:mb, histByBike:hb},
     health:{weight:weightEntries, foodLog:foodLog},
-    expense:{list:expenseList}
+    expense:{list:expenseList, names:expNames, payments:expPayments}
   };
 }
 function applySyncData(p, updatedAt){
@@ -2902,6 +2967,11 @@ function applySyncData(p, updatedAt){
     if(core.healthSettings&&typeof core.healthSettings==="object"){ hSettings=core.healthSettings; if(!hSettings.heightM) hSettings.heightM=1.76; if(!hSettings.age) hSettings.age=22; if(!ACT_FACTOR[hSettings.activity]) hSettings.activity="light"; save(LS_HSET, hSettings); }
     if(health.foodLog&&typeof health.foodLog==="object"){ foodLog=health.foodLog; save(LS_FOODLOG, foodLog); }
     var ex=p.expense||{}; if(Array.isArray(ex.list)){ expenseList=ex.list; save(LS_EXPENSE, expenseList); }
+    if(Array.isArray(ex.names)){ expNames=ex.names; save(LS_EXP_NAMES, expNames); }
+    if(Array.isArray(ex.payments)){ expPayments=ex.payments; save(LS_EXP_PAYMENTS, expPayments); }
+    expenseList.forEach(function(e){ normalizeExpense(e); });
+    applyRepayments(); save(LS_EXPENSE, expenseList);
+    refreshPersonSelects();
     if(core.goals&&typeof core.goals==="object"){ save(LS_GOALS, core.goals); }
     fillSettingsForm(); renderBikes(); renderAll();
   }finally{ applyingCloud=false; }
@@ -2927,6 +2997,7 @@ function syncPendingPhotos(){
   bikes.forEach(function(b){ if(b.id!==activeBikeId) targets.push({list:load(bikeOdoKey(b.id),[]), key:bikeOdoKey(b.id)}); });
   targets.push({list:weightEntries, key:LS_WEIGHT});
   targets.push({list:expenseList, key:LS_EXPENSE});
+  targets.push({list:expPayments, key:LS_EXP_PAYMENTS});
   var jobs=[];
   targets.forEach(function(tg){ tg.list.forEach(function(en){ if(en.photoId&&!en.photoUrl) jobs.push({en:en, tg:tg}); }); });
   bikes.forEach(function(b){ if(b.photoId&&!b.photoUrl) jobs.push({en:b, tg:null}); });
@@ -3978,7 +4049,7 @@ function initV51(){
 
 /* ---------- Chi tiêu ---------- */
 var expKind="chi";
-function expTotals(){ var spent=0, lent=0, unpaid=0; expenseList.forEach(function(e){ var a=+e.amount||0; if(e.kind==="vay"){ lent+=a; } else { spent+=a; } if(!e.paid){ unpaid+=a; } }); return {spent:spent, lent:lent, unpaid:unpaid}; }
+function expTotals(){ var spent=0, lent=0, unpaid=0; expenseList.forEach(function(e){ var a=+e.amount||0, pa=+e.paidAmount||0; if(e.kind==="vay"){ lent+=a; unpaid+=Math.max(0,a-pa); } else { spent+=a; } }); return {spent:spent, lent:lent, unpaid:unpaid}; }
 function renderExpense(){
   var t=expTotals();
   var a=document.getElementById("expStatSpent"), b=document.getElementById("expStatLent"), c=document.getElementById("expStatUnpaid");
@@ -3988,9 +4059,227 @@ function renderExpense(){
   if(!rows.length){ list.innerHTML='<div class="empty" style="padding:12px">Chưa có khoản chi nào.</div>'; return; }
   list.innerHTML=rows.map(function(e,i){
     var thumb=e.photoId?'<img class="thumb exp-thumb" data-photo="'+e.photoId+'"'+(e.photoUrl?' data-cloud="'+e.photoUrl+'"':"")+' data-caption="'+esc(e.name)+' · '+fmt(e.amount)+' đ" alt="Ảnh hóa đơn" />':"";
-    return '<div class="exp-row"><span class="exp-stt">'+(i+1)+'</span><div class="exp-main">'+thumb+'<div class="exp-name">'+esc(e.name)+(e.kind==="vay"?'<span class="exp-tag">Cho vay</span>':"")+'</div></div><span class="exp-amt mono">'+fmt(e.amount)+' đ</span><span class="exp-date">'+fmtDate(e.date)+'</span><button type="button" class="exp-pay '+(e.paid?"paid":"unpaid")+'" data-exp-pay="'+e.id+'" aria-label="'+(e.paid?"Đánh dấu chưa thanh toán":"Đánh dấu đã thanh toán")+'">'+(e.paid?"✓":"✕")+'</button><button type="button" class="icon-btn danger exp-del" data-exp-del="'+e.id+'" aria-label="Xóa khoản chi">×</button></div>';
+    var settled=e.kind==="vay" && (+e.amount||0)>0 && (+e.paidAmount||0)>=(+e.amount||0);
+    var sub="";
+    if(e.kind==="vay"){
+      var rem=Math.max(0,(+e.amount||0)-(+e.paidAmount||0));
+      if(settled) sub='<div class="exp-sub">Đã trả hết</div>';
+      else if((+e.paidAmount||0)>0) sub='<div class="exp-sub">Đã trả '+fmt(e.paidAmount)+' đ · Còn '+fmt(rem)+' đ</div>';
+    }
+    var tag=e.kind==="vay"?'<span class="exp-tag">Cho vay'+(e.person?' · '+esc(e.person):"")+'</span>':"";
+    var payBtn=e.kind==="vay"?'<button type="button" class="exp-pay '+(e.paid?"paid":"unpaid")+'" data-exp-pay="'+e.id+'" aria-label="'+(e.paid?"Đánh dấu chưa thanh toán":"Đánh dấu đã thanh toán")+'">'+(e.paid?"✓":"✕")+'</button>':"<span></span>";
+    return '<div class="exp-row'+(settled?" settled":"")+'"><span class="exp-stt">'+(i+1)+'</span><div class="exp-main">'+thumb+'<div style="min-width:0"><div class="exp-name">'+esc(e.name)+tag+'</div>'+sub+'</div></div><span class="exp-amt mono">'+fmt(e.amount)+' đ</span><span class="exp-date">'+fmtDate(e.date)+'</span>'+payBtn+'<button type="button" class="icon-btn danger exp-del" data-exp-del="'+e.id+'" aria-label="Xóa khoản chi">×</button></div>';
   }).join("");
   hydrateThumbs(list);
+}
+function normalizeExpense(e){
+  if(!e) return;
+  if(typeof e.person!=="string") e.person="";
+  if(typeof e.paidAmount!=="number"||isNaN(e.paidAmount)) e.paidAmount=0;
+  if(e.paidAmount<0) e.paidAmount=0;
+  var a=+e.amount||0;
+  if(e.paidAmount>a) e.paidAmount=a;
+  if(typeof e.manualPaid!=="boolean") e.manualPaid=e.paid===true;
+}
+function normName(s){ return String(s||"").trim().replace(/\s+/g," "); }
+function personUnpaid(name){
+  var who=normName(name).toLowerCase(); if(!who) return 0;
+  var s=0;
+  expenseList.forEach(function(e){ if(e.kind==="vay" && normName(e.person).toLowerCase()===who) s+=Math.max(0,(+e.amount||0)-(+e.paidAmount||0)); });
+  return s;
+}
+function applyRepayments(){
+  expenseList.forEach(function(e){ normalizeExpense(e); });
+  expenseList.forEach(function(e){
+    if(e.kind!=="vay"){ e.paidAmount=0; e.paid=false; e.manualPaid=false; return; }
+    e.paidAmount=e.manualPaid ? (+e.amount||0) : 0;
+  });
+  var pays=expPayments.slice().sort(function(a,b){ return (a.date<b.date?-1:a.date>b.date?1:0)||(a.id-b.id); });
+  pays.forEach(function(p){
+    var left=+p.amount||0, who=normName(p.person).toLowerCase();
+    p.applied=0; p.excess=0;
+    if(left<=0) return;
+    var items=expenseList.filter(function(e){ return e.kind==="vay" && (!who || normName(e.person).toLowerCase()===who); }).sort(function(a,b){ return (a.date<b.date?-1:a.date>b.date?1:0)||(a.id-b.id); });
+    items.forEach(function(e){
+      if(left<=0) return;
+      var rem=(+e.amount||0)-(+e.paidAmount||0);
+      if(rem<=0) return;
+      var take=Math.min(rem,left);
+      e.paidAmount=(+e.paidAmount||0)+take; left-=take; p.applied+=take;
+    });
+    p.excess=left;
+  });
+  expenseList.forEach(function(e){ if(e.kind==="vay") e.paid=(+e.paidAmount||0)>=(+e.amount||0); });
+}
+function refreshPersonSelects(){
+  ["expPersonSel","repayPersonSel"].forEach(function(id){
+    var sel=document.getElementById(id); if(!sel) return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">Chọn tên đã lưu…</option>'+expNames.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join("");
+    if(cur && expNames.indexOf(cur)>=0) sel.value=cur;
+  });
+}
+function savePersonName(name){
+  name=normName(name);
+  if(!name){ toast("Anh gõ tên trước đã nhé"); return false; }
+  if(expNames.indexOf(name)<0){ expNames.push(name); expNames.sort(function(a,b){ return a.localeCompare(b,"vi"); }); save(LS_EXP_NAMES, expNames); }
+  refreshPersonSelects();
+  toast("Đã lưu tên "+name);
+  return true;
+}
+function updateRepayOwed(){
+  var el=document.getElementById("repayOwed"); if(!el) return;
+  var n=normName(document.getElementById("repayPerson").value);
+  if(!n){ el.textContent=""; return; }
+  var u=personUnpaid(n);
+  el.textContent=u>0 ? n+" còn nợ "+fmt(u)+" đ" : n+" không còn khoản vay nào chưa trả";
+}
+function wirePersonPicker(inputId, selId, saveId){
+  var inp=document.getElementById(inputId), sel=document.getElementById(selId), btn=document.getElementById(saveId);
+  if(sel) sel.addEventListener("change", function(){ if(sel.value){ inp.value=sel.value; sel.value=""; } if(inputId==="repayPerson") updateRepayOwed(); });
+  if(inp && inputId==="repayPerson") inp.addEventListener("input", updateRepayOwed);
+  if(btn) btn.addEventListener("click", function(){ savePersonName(inp.value); });
+}
+var _invOcrWorker=null;
+function invoiceOcrWorker(){
+  if(_invOcrWorker) return _invOcrWorker;
+  _invOcrWorker=window.Tesseract.createWorker("vie+eng").catch(function(e){ _invOcrWorker=null; throw e; });
+  return _invOcrWorker;
+}
+function invoiceOcrText(blob){
+  if(!window.Tesseract || !Tesseract.createWorker) return Promise.resolve(null);
+  return new Promise(function(res){
+    var url=URL.createObjectURL(blob);
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var W=img.naturalWidth, H=img.naturalHeight;
+        var scale=Math.min(1, 1600/Math.max(W,H));
+        var c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(W*scale)); c.height=Math.max(1,Math.round(H*scale));
+        var ctx=c.getContext("2d");
+        ctx.drawImage(img,0,0,c.width,c.height);
+        var imd=ctx.getImageData(0,0,c.width,c.height), d=imd.data, i, g;
+        for(i=0;i<d.length;i+=4){ g=Math.round(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]); d[i]=g; d[i+1]=g; d[i+2]=g; }
+        ctx.putImageData(imd,0,0);
+        URL.revokeObjectURL(url);
+        invoiceOcrWorker().then(function(w){ return w.recognize(c); }).then(function(r){
+          var lines=null;
+          if(r && r.data && r.data.lines) lines=r.data.lines.map(function(l){ return l.text; });
+          res({text:(r&&r.data&&r.data.text)||"", lines:lines});
+        }).catch(function(){ res(null); });
+      }catch(e){ URL.revokeObjectURL(url); res(null); }
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); res(null); };
+    img.src=url;
+  });
+}
+function stripDiacritics(s){ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/Đ/g,"D").replace(/đ/g,"d"); }
+function normKey(s){ return stripDiacritics(s).toLowerCase().replace(/\s+/g,""); }
+function parseVnd(s){
+  var m=String(s||"").match(/([\d.,]+)/);
+  if(!m) return NaN;
+  var n=parseInt(m[1].replace(/[.,]/g,""),10);
+  return isNaN(n)?NaN:n;
+}
+function isUiLine(s){
+  var l=normKey(s);
+  if(/dondamua|dagiao|hoanthanh|tongsotien|danhgia|mualai|trahang|hoantien|xemthem|cholayhang|chogiaohang|dahuy|voucher|nhanxu|dathang|thanhtoan|giohang/.test(l)) return true;
+  if(/^\s*x\d+\s*$/.test(s)) return true;
+  var noPrice=s.replace(/[\d.,]+\s*[đd4]/g,"").replace(/[^\wÀ-ỹ]+/g," ").trim();
+  if(!noPrice) return true;
+  return s.trim().length<2;
+}
+function cleanInvoiceName(s){
+  s=String(s||"").trim().replace(/^[^\wÀ-ỹ]+/,"").replace(/\s*x\d+\s*$/,"").replace(/\s*\.{2,}\s*$/,"").trim();
+  return s;
+}
+function parseInvoiceText(ocr){
+  if(!ocr) return [];
+  var lines=(ocr.lines && ocr.lines.length ? ocr.lines : String(ocr.text||"").split("\n")).map(function(s){ return String(s||"").trim(); }).filter(function(s){ return s.length>0; });
+  var totals=[];
+  lines.forEach(function(s,i){ if(/tongsotien/.test(normKey(s))) totals.push(i); });
+  var out=[];
+  if(!totals.length){
+    var name="";
+    lines.forEach(function(s){ if(!isUiLine(s) && s.length>name.length) name=s; });
+    var amt=NaN;
+    for(var i=lines.length-1;i>=0;i--){ var ms=lines[i].match(/[\d.,]+\s*[đd]/g); if(ms){ amt=parseVnd(ms[ms.length-1]); break; } }
+    if(name||!isNaN(amt)) out.push({name:cleanInvoiceName(name), amount:isNaN(amt)?0:amt});
+    return out;
+  }
+  var start=0;
+  totals.forEach(function(ti){
+    var seg=lines.slice(start, ti+1);
+    var amt=NaN;
+    var ms=lines[ti].match(/[\d.,]+\s*[đd]/g);
+    if(ms) amt=parseVnd(ms[ms.length-1]);
+    if(isNaN(amt) && ti+1<lines.length){ var ms2=lines[ti+1].match(/[\d.,]+\s*[đd]/g); if(ms2) amt=parseVnd(ms2[ms2.length-1]); }
+    var name="";
+    seg.forEach(function(s){ if(!isUiLine(s) && s.length>name.length) name=s; });
+    out.push({name:cleanInvoiceName(name), amount:isNaN(amt)?0:amt});
+    start=ti+1;
+  });
+  return out;
+}
+function renderInvoiceDrafts(){
+  var box=document.getElementById("expInvoiceList"); if(!box) return;
+  var btn=document.getElementById("expSubmitBtn");
+  if(!invoiceDrafts.length){ box.innerHTML=""; if(btn) btn.textContent="Lưu khoản chi"; return; }
+  box.innerHTML=invoiceDrafts.map(function(d,i){
+    return '<div class="inv-item" data-inv-item="'+i+'"><div class="inv-row"><img class="inv-thumb" src="'+(d.pending.url||"")+'" alt="Hóa đơn" /><div class="inv-fields"><input type="text" data-inv-name="'+i+'" value="'+esc(d.name)+'" placeholder="Tên đầu mục" autocomplete="off" /><input type="text" class="mono" data-inv-amt="'+i+'" value="'+(d.amount?fmt(d.amount):"")+'" placeholder="Giá tiền (đ)" inputmode="numeric" /></div><button type="button" class="icon-btn danger inv-del" data-inv-del="'+i+'" aria-label="Bỏ hóa đơn này">×</button></div><div class="inv-status" data-inv-status="'+i+'">'+esc(d.status||"")+'</div></div>';
+  }).join("");
+  if(btn) btn.textContent="Lưu "+invoiceDrafts.length+" khoản từ hóa đơn";
+}
+function syncDraftInputs(){
+  invoiceDrafts.forEach(function(d,i){
+    var nm=document.querySelector('[data-inv-name="'+i+'"]');
+    var am=document.querySelector('[data-inv-amt="'+i+'"]');
+    if(nm) d.name=nm.value.trim();
+    if(am){ var v=parseKm(am.value); d.amount=isNaN(v)?0:Math.round(v); }
+  });
+}
+function updateDraftRow(i){
+  var d=invoiceDrafts[i]; if(!d) return;
+  var item=document.querySelector('[data-inv-item="'+i+'"]'); if(!item) return;
+  var th=item.querySelector(".inv-thumb"); if(th && d.pending.url && th.getAttribute("src")!==d.pending.url) th.src=d.pending.url;
+  var nm=item.querySelector('[data-inv-name]'); if(nm && !nm.value && d.name) nm.value=d.name;
+  var am=item.querySelector('[data-inv-amt]'); if(am && !am.value && d.amount) am.value=fmt(d.amount);
+  var st=item.querySelector('[data-inv-status]'); if(st) st.textContent=d.status||"";
+}
+function processInvoiceDrafts(){
+  var i=-1;
+  for(var k=0;k<invoiceDrafts.length;k++){ if(!invoiceDrafts[k].done){ i=k; break; } }
+  if(i<0){ setOcrStatus("expOcrStatus",""); return; }
+  var d=invoiceDrafts[i];
+  d.status="Đang nén ảnh…"; updateDraftRow(i);
+  processPhoto(d.file).then(function(blob){
+    setPending(d.pending, blob);
+    d.status="Đang đọc hóa đơn…"; updateDraftRow(i);
+    setOcrStatus("expOcrStatus", _invOcrWorker ? "Đang đọc hóa đơn…" : "Đang tải bộ đọc tiếng Việt lần đầu, anh đợi khoảng 1 phút…");
+    var to=new Promise(function(res){ setTimeout(function(){ res(null); }, 90000); });
+    return Promise.race([invoiceOcrText(d.file), to]).then(function(ocr){
+      syncDraftInputs();
+      var items=parseInvoiceText(ocr);
+      d.file=null;
+      if(items && items.length){
+        d.name=items[0].name; d.amount=items[0].amount;
+        d.status=items.length>1 ? "Đã nhận diện "+items.length+" hóa đơn trong ảnh này, anh kiểm tra lại tên với giá nhé" : "Đã nhận diện, anh kiểm tra lại tên với giá nhé";
+        if(items.length>1){
+          for(var k2=1;k2<items.length;k2++){
+            var nd={pending:makePending(), name:items[k2].name, amount:items[k2].amount, status:"Đã nhận diện, anh kiểm tra lại tên với giá nhé", done:true, file:null};
+            setPending(nd.pending, d.pending.blob);
+            invoiceDrafts.splice(i+k2,0,nd);
+          }
+          renderInvoiceDrafts();
+        }
+      } else {
+        d.status="Không đọc được hóa đơn, anh nhập tay nhé";
+      }
+      d.done=true; updateDraftRow(i);
+      processInvoiceDrafts();
+    });
+  }).catch(function(){ d.file=null; d.status="Không đọc được ảnh này"; d.done=true; updateDraftRow(i); processInvoiceDrafts(); });
 }
 function resetExpForm(){
   document.getElementById("expName").value="";
@@ -3998,48 +4287,135 @@ function resetExpForm(){
   document.getElementById("expDate").value=todayStr();
   expKind="chi";
   document.querySelectorAll("#expKindBtns button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-kind")==="chi"); });
-  clearPending(pendingExpensePhoto);
-  document.getElementById("expPhotoPrev").classList.remove("show");
-  document.getElementById("expPhotoImg").removeAttribute("src");
+  document.getElementById("expPerson").value="";
+  document.getElementById("expPersonRow").hidden=true;
+  invoiceDrafts.forEach(function(d){ clearPending(d.pending); });
+  invoiceDrafts=[];
+  renderInvoiceDrafts();
+  setOcrStatus("expOcrStatus","");
 }
 document.getElementById("ctaExpense").addEventListener("click", function(){ resetExpForm(); openSheet("sheet-expense"); });
+document.getElementById("ctaRepay").addEventListener("click", function(){ resetRepayForm(); renderRepayList(); openSheet("sheet-repay"); });
 document.getElementById("expKindBtns").addEventListener("click", function(e){
   var b=e.target.closest("button[data-kind]"); if(!b) return;
   expKind=b.getAttribute("data-kind");
   document.querySelectorAll("#expKindBtns button").forEach(function(x){ x.classList.toggle("on", x===b); });
+  document.getElementById("expPersonRow").hidden=expKind!=="vay";
 });
 document.getElementById("expPhotoBtn").addEventListener("click", function(){ document.getElementById("expPhoto").click(); });
 document.getElementById("expPhoto").addEventListener("change", function(){
-  var f=this.files&&this.files[0]; this.value="";
-  if(!f) return;
-  processPhoto(f).then(function(blob){
-    setPending(pendingExpensePhoto, blob);
-    document.getElementById("expPhotoImg").src=pendingExpensePhoto.url;
-    document.getElementById("expPhotoMeta").textContent="Upload lúc "+fmtDateTime(pendingExpensePhoto.ts);
-    document.getElementById("expPhotoPrev").classList.add("show");
-  }).catch(function(){ toast("Không đọc được ảnh này, anh thử ảnh khác nhé"); });
+  var files=this.files?Array.prototype.slice.call(this.files):[]; this.value="";
+  if(!files.length) return;
+  files.forEach(function(f){ invoiceDrafts.push({pending:makePending(), name:"", amount:0, status:"Đang chờ nhận diện…", done:false, file:f}); });
+  renderInvoiceDrafts();
+  processInvoiceDrafts();
 });
-document.getElementById("expPhotoRemove").addEventListener("click", function(){
-  clearPending(pendingExpensePhoto);
-  document.getElementById("expPhotoPrev").classList.remove("show");
-  document.getElementById("expPhotoImg").removeAttribute("src");
+document.getElementById("expInvoiceList").addEventListener("click", function(e){
+  var del=e.target.closest("[data-inv-del]"); if(!del) return;
+  var idx=+del.getAttribute("data-inv-del");
+  syncDraftInputs();
+  var d=invoiceDrafts[idx];
+  if(d){ clearPending(d.pending); invoiceDrafts.splice(idx,1); }
+  renderInvoiceDrafts();
 });
 document.getElementById("expenseForm").addEventListener("submit", function(ev){
   ev.preventDefault();
-  var name=document.getElementById("expName").value.trim();
-  var amount=parseKm(document.getElementById("expAmount").value);
   var date=document.getElementById("expDate").value;
-  if(!name||isNaN(amount)||amount<0||!date){ toast("Tên, giá tiền hoặc ngày chưa hợp lệ"); return; }
-  var en={id:Date.now(), name:name, amount:Math.round(amount), date:date, kind:expKind, paid:false, ts:new Date().toISOString()};
-  function finish(){ expenseList.unshift(en); save(LS_EXPENSE, expenseList); renderExpense(); closeSheet(); toast("Đã lưu khoản chi"); }
-  if(pendingExpensePhoto.blob){ storePending(pendingExpensePhoto,"expense").then(function(r){ if(r){ en.photoId=r.id; en.photoTs=r.ts; } finish(); }); }
-  else { finish(); }
+  var person=normName(document.getElementById("expPerson").value);
+  var kind=expKind;
+  if(!date){ toast("Anh chọn ngày đã nhé"); return; }
+  syncDraftInputs();
+  var entries=[];
+  invoiceDrafts.forEach(function(d){
+    if(!d.name && !(d.amount>0)) return;
+    entries.push({name:d.name||"Hóa đơn", amount:Math.round(d.amount||0), pending:d.pending});
+  });
+  var manualName=document.getElementById("expName").value.trim();
+  var manualAmt=parseKm(document.getElementById("expAmount").value);
+  if(manualName && !isNaN(manualAmt) && manualAmt>=0) entries.push({name:manualName, amount:Math.round(manualAmt), pending:null});
+  if(!entries.length){ toast("Anh nhập tên với giá tiền, hoặc chọn ảnh hóa đơn nhé"); return; }
+  var blobs=[];
+  entries.forEach(function(en){ if(en.pending && en.pending.blob && blobs.indexOf(en.pending.blob)<0) blobs.push(en.pending.blob); });
+  var stored=[];
+  var chain=Promise.resolve();
+  blobs.forEach(function(b){
+    chain=chain.then(function(){
+      var p={blob:b, ts:new Date().toISOString(), url:null};
+      return storePending(p,"expense").then(function(r){ if(r) stored.push({blob:b, id:r.id, ts:r.ts}); });
+    });
+  });
+  chain.then(function(){
+    var base=Date.now();
+    entries.forEach(function(en,idx){
+      var e={id:base+idx, name:en.name, amount:en.amount, date:date, kind:kind, person:kind==="vay"?person:"", paidAmount:0, paid:false, ts:new Date().toISOString()};
+      if(en.pending && en.pending.blob){ var found=null; stored.forEach(function(s){ if(s.blob===en.pending.blob) found=s; }); if(found){ e.photoId=found.id; e.photoTs=found.ts; } }
+      expenseList.unshift(e);
+    });
+    save(LS_EXPENSE, expenseList);
+    resetExpForm();
+    renderExpense();
+    closeSheet();
+    toast("Đã lưu "+entries.length+" khoản chi");
+  });
 });
 document.getElementById("expList").addEventListener("click", function(e){
   var pay=e.target.closest("[data-exp-pay]");
-  if(pay){ var id=+pay.getAttribute("data-exp-pay"); expenseList.forEach(function(x){ if(x.id===id) x.paid=!x.paid; }); save(LS_EXPENSE, expenseList); renderExpense(); return; }
+  if(pay){ var id=+pay.getAttribute("data-exp-pay"); var changed=false; expenseList.forEach(function(x){ if(x.id===id){ if((+x.paidAmount||0)>=(+x.amount||0)){ if(x.manualPaid){ x.manualPaid=false; changed=true; } else { toast("Món này đã trừ từ tiền trả lại, anh xóa khoản trả tiền để hoàn tác nhé"); } } else { x.manualPaid=true; changed=true; } } }); if(changed){ applyRepayments(); save(LS_EXPENSE, expenseList); renderExpense(); } return; }
   var del=e.target.closest("[data-exp-del]");
   if(del){ var id2=+del.getAttribute("data-exp-del"); var en=null; expenseList.forEach(function(x){ if(x.id===id2) en=x; }); if(en&&en.photoId){ deletePhotoFromCloud(en.photoId); idbDel(en.photoId); delete photoURLCache[en.photoId]; } expenseList=expenseList.filter(function(x){ return x.id!==id2; }); save(LS_EXPENSE, expenseList); renderExpense(); toast("Đã xóa khoản chi"); }
+});
+var pendingRepayPhoto = makePending();
+function renderRepayList(){
+  var list=document.getElementById("repayList"); if(!list) return;
+  var rows=expPayments.slice().sort(function(a,b){ return a.date>b.date?-1:a.date<b.date?1:b.id-a.id; });
+  if(!rows.length){ list.innerHTML='<div class="empty" style="padding:12px">Chưa có khoản trả tiền nào.</div>'; return; }
+  list.innerHTML=rows.map(function(p,i){
+    var thumb=p.photoId?'<img class="thumb exp-thumb" data-photo="'+p.photoId+'"'+(p.photoUrl?' data-cloud="'+p.photoUrl+'"':"")+' data-caption="'+esc(p.person||"Trả tiền")+' · '+fmt(p.amount)+' đ" alt="Ảnh chuyển khoản" />':"";
+    return '<div class="exp-row"><span class="exp-stt">'+(i+1)+'</span><div class="exp-main">'+thumb+'<div style="min-width:0"><div class="exp-name">'+esc(p.person||"Không tên")+'</div><div class="exp-sub">Đã trừ '+fmt(p.applied||0)+' đ'+(p.excess>0?' · Dư '+fmt(p.excess)+' đ':"")+'</div></div></div><span class="exp-amt mono">'+fmt(p.amount)+' đ</span><span class="exp-date">'+fmtDate(p.date)+'</span><span></span><button type="button" class="icon-btn danger exp-del" data-repay-del="'+p.id+'" aria-label="Xóa khoản trả tiền">×</button></div>';
+  }).join("");
+  hydrateThumbs(list);
+}
+function resetRepayForm(){
+  document.getElementById("repayPerson").value="";
+  document.getElementById("repayAmount").value="";
+  document.getElementById("repayDate").value=todayStr();
+  resetPicker("repayPhotoPrev","repayPhotoImg", pendingRepayPhoto);
+  updateRepayOwed();
+}
+wirePhotoPicker("repayPhotoBtn","repayPhoto","repayPhotoPrev","repayPhotoImg","repayPhotoMeta","repayPhotoRemove", pendingRepayPhoto);
+wirePersonPicker("expPerson","expPersonSel","expPersonSave");
+wirePersonPicker("repayPerson","repayPersonSel","repayPersonSave");
+document.getElementById("repayForm").addEventListener("submit", function(ev){
+  ev.preventDefault();
+  var person=normName(document.getElementById("repayPerson").value);
+  var amount=parseKm(document.getElementById("repayAmount").value);
+  var date=document.getElementById("repayDate").value;
+  if(isNaN(amount)||amount<=0||!date){ toast("Số tiền hoặc ngày chưa hợp lệ"); return; }
+  var rp={id:Date.now(), person:person, amount:Math.round(amount), date:date, ts:new Date().toISOString()};
+  function finish(){
+    expPayments.unshift(rp);
+    save(LS_EXP_PAYMENTS, expPayments);
+    applyRepayments();
+    save(LS_EXPENSE, expenseList);
+    renderExpense(); renderRepayList();
+    var msg="Đã ghi nhận "+fmt(rp.amount)+" đ · Đã trừ "+fmt(rp.applied||0)+" đ";
+    if(rp.excess>0) msg+=" · Dư "+fmt(rp.excess)+" đ (trả thừa)";
+    resetRepayForm();
+    toast(msg);
+  }
+  if(pendingRepayPhoto.blob){ storePending(pendingRepayPhoto,"expense").then(function(r){ if(r){ rp.photoId=r.id; rp.photoTs=r.ts; } finish(); }); }
+  else finish();
+});
+document.getElementById("repayList").addEventListener("click", function(e){
+  var del=e.target.closest("[data-repay-del]"); if(!del) return;
+  var id=+del.getAttribute("data-repay-del");
+  var rp=null; expPayments.forEach(function(x){ if(x.id===id) rp=x; });
+  if(rp&&rp.photoId){ deletePhotoFromCloud(rp.photoId); idbDel(rp.photoId); delete photoURLCache[rp.photoId]; }
+  expPayments=expPayments.filter(function(x){ return x.id!==id; });
+  save(LS_EXP_PAYMENTS, expPayments);
+  applyRepayments(); save(LS_EXPENSE, expenseList);
+  renderExpense(); renderRepayList(); updateRepayOwed();
+  toast("Đã xóa khoản trả tiền");
 });
 
 /* ---------- Khởi tạo ---------- */
