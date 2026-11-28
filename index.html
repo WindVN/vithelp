@@ -132,6 +132,36 @@ label.f,.f{display:block;font-size:13px;font-weight:500;color:var(--ink2);margin
 .stat+.stat{border-left:1px solid var(--line)}
 .stat .v{font:500 clamp(14px,4.2vw,20px)/1.15 var(--font);letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums;text-wrap:balance}
 .stat .l{font-size:12px;line-height:1.35;color:var(--ink2);margin-top:7px}
+.exp-stats .stat{appearance:none;-webkit-appearance:none;background:transparent;border:0;font:inherit;color:inherit;cursor:pointer}
+.stat .v.earn{color:var(--signal)}
+.stat .sub{font-size:11px;line-height:1.3;color:var(--ink2);margin-top:4px}
+.stat .sub.red{color:#e5484d;font-weight:600}
+.stat.on{background:rgba(255,255,255,.10)}
+.stat.on .l{color:#fff}
+.remain-row{margin:10px 0 0;border:1px solid var(--glass-brd);border-radius:18px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:14px 16px}
+.remain-line{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.remain-l{font-size:13px;color:var(--ink2)}
+.remain-v{font:500 20px/1.15 var(--font);letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums}
+.remain-sub{font-size:12px;color:var(--ink2);margin-top:6px}
+.remain-sub .mono{color:var(--signal);font-weight:600}
+.exp-kind.thu{color:var(--signal);background:rgba(217,242,74,.12)}
+.exp-amt.earn{color:var(--signal)}
+#view-expense{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+.view-banner{margin:16px 0 0;border:1px solid rgba(217,242,74,.4);background:rgba(217,242,74,.08);border-radius:14px;padding:10px 14px;font-size:13px;color:#fff}
+.prof-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.prof-avatar{width:52px;height:52px;flex:none;border-radius:50%;background:var(--glass2);border:1px solid var(--glass-brd);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;overflow:hidden}
+.prof-avatar img{width:100%;height:100%;object-fit:cover}
+.prof-id{flex:1;min-width:0}
+.prof-name{font-size:16px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof-sub{font-size:12px;color:var(--ink2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof-sec{margin-top:18px}
+.prof-sec h4{margin:0 0 8px;font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.prof-acc{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--glass);border:1px solid var(--glass-brd);border-radius:14px;padding:12px 14px;color:#fff;font:500 14px var(--font);margin-bottom:8px;cursor:pointer}
+.prof-acc.on{border-color:rgba(217,242,74,.5);background:rgba(217,242,74,.08)}
+.prof-acc .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof-acc .tag{font-size:11px;color:var(--ink2);flex:none}
+.prof-row{display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--glass-brd);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.prof-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 
 /* ---------- Buttons ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 26px;border-radius:var(--pill);border:1px solid transparent;font:500 15px/1 var(--font);letter-spacing:-.01em;text-decoration:none;transition:transform .2s var(--ease),background .2s,border-color .2s}
@@ -772,11 +802,13 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
 
 <section class="view" id="view-expense">
     <h2 class="sec">Chi tiêu</h2>
-    <div class="stats">
-      <div class="stat"><div class="v mono" id="expStatSpent">0 đ</div><div class="l">Đã chi</div></div>
-      <div class="stat"><div class="v mono" id="expStatLent">0 đ</div><div class="l">Cho vay</div></div>
-      <div class="stat"><div class="v mono" id="expStatUnpaid">0 đ</div><div class="l">Chưa trả</div></div>
+    <div class="view-banner" id="expViewBanner" hidden>Đang xem sổ của <b id="expViewBannerName">@...</b> (chỉ xem) <button type="button" class="link-btn" id="expViewBackBtn">Về sổ của tôi</button></div>
+    <div class="stats exp-stats">
+      <button type="button" class="stat" id="chipEarn" data-exp-filter="thu"><div class="v mono earn" id="expStatEarn">0 đ</div><div class="l">Thu nhập</div></button>
+      <button type="button" class="stat" id="chipSpent" data-exp-filter="chi"><div class="v mono" id="expStatSpent">0 đ</div><div class="l">Đã chi</div></button>
+      <button type="button" class="stat" id="chipLent" data-exp-filter="vay"><div class="v mono" id="expStatLent">0 đ</div><div class="l" id="chipLentLabel">Cho vay</div><div class="sub red" id="expStatUnpaidLine">Chưa trả: 0 đ</div></button>
     </div>
+    <div class="remain-row"><div class="remain-line"><span class="remain-l">Còn lại</span><span class="remain-v mono" id="expStatRemain">0 đ</span></div><div class="remain-sub"><span id="expStatRemainFullLabel">Được trả sẽ còn:</span> <span class="mono" id="expStatRemainFull">0 đ</span></div></div>
     <div class="home-cta"><button type="button" class="btn btn-red btn-block" id="ctaExpense">Thêm khoản chi</button></div>
     <div class="home-cta"><button type="button" class="btn btn-line btn-block" id="ctaRepay" style="margin-top:10px">Ghi nhận trả tiền</button></div>
     <div class="card">
@@ -882,9 +914,43 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
   </div>
 </div>
 
+<div class="sheet" id="sheet-profile" role="dialog" aria-modal="true" aria-label="Profile">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h3>Profile</h3><button type="button" class="sheet-close" data-close aria-label="Đóng">×</button></div>
+  <div class="sheet-body" id="sheetProfileBody">
+    <div class="prof-head">
+      <div class="prof-avatar" id="profAvatar">?</div>
+      <div class="prof-id">
+        <div class="prof-name" id="profName">@...</div>
+        <div class="prof-sub" id="profSub"></div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" id="profEditBtn">Chỉnh sửa</button>
+    </div>
+    <div id="profEditBox" hidden>
+      <label class="f" for="profDisplayName">Tên hiển thị</label>
+      <input type="text" id="profDisplayName" placeholder="Tên hiển thị" autocomplete="off" />
+      <button type="button" class="btn btn-line btn-block" id="profAvatarBtn" style="margin-top:10px">Đổi ảnh đại diện</button>
+      <input type="file" id="profAvatarFile" accept="image/*" hidden />
+      <button type="button" class="btn btn-red btn-block" id="profSaveBtn" style="margin-top:10px">Lưu profile</button>
+    </div>
+    <div class="prof-sec"><h4>Chuyển sổ</h4><div id="profAccounts"></div></div>
+    <div class="prof-sec"><h4>Mời theo username</h4>
+      <div class="person-row"><input type="text" id="profInviteUser" placeholder="Nhập username, ví dụ: nam123" autocomplete="off" /><button type="button" class="btn btn-line" id="profInviteBtn">Mời</button></div>
+      <div class="hint" id="profInviteMsg"></div>
+    </div>
+    <div class="prof-sec" id="profInvitesSec" hidden><h4>Lời mời đã nhận</h4><div id="profInvites"></div></div>
+    <div class="prof-sec" id="profSharedSec" hidden><h4>Đã chia sẻ sổ của tôi với</h4><div id="profShared"></div></div>
+    <div class="prof-sec"><h4>Khác</h4>
+      <div class="acc-row"><span class="k">Cài đặt sức khoẻ</span><button type="button" class="btn btn-ghost btn-sm" id="profSettingsBtn">Mở</button></div>
+      <div class="acc-row"><span class="k">FaceID</span><span class="v" id="profFaceIdState">Chưa bật</span><button type="button" class="btn btn-ghost btn-sm" id="profFaceIdBtn">Bật</button></div>
+      <div class="acc-row"><span class="k">Đăng xuất</span><button type="button" class="btn btn-ghost btn-sm" id="profLogoutBtn">Đăng xuất</button></div>
+    </div>
+  </div>
+</div>
+
 <div class="sheet" id="sheet-expense" role="dialog" aria-modal="true" aria-label="Thêm khoản chi">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><h3>Thêm khoản chi</h3><button type="button" class="sheet-close" data-close aria-label="Đóng">×</button></div>
+    <div class="sheet-head"><h3 id="expSheetTitle">Thêm khoản chi</h3><button type="button" class="sheet-close" data-close aria-label="Đóng">×</button></div>
     <div class="sheet-body">
       <form id="expenseForm">
         <div id="expNameWrap">
@@ -904,6 +970,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
         <div style="margin-top:10px">
           <label class="f">Loại</label>
           <div class="acc-tabs" id="expKindBtns" role="tablist">
+            <button type="button" data-kind="thu">Thu nhập</button>
             <button type="button" data-kind="chi" class="on">Chi tiêu</button>
             <button type="button" data-kind="vay">Cho vay</button>
           </div>
@@ -991,7 +1058,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-
 (function(){
 "use strict";
 var LS_ODO="vision110_odo_v1", LS_MAINT="vision110_maint_v1", LS_HIST="vision110_hist_v1";
-var LS_WEIGHT="vision110_weight_v1", LS_HSET="vision110_health_settings_v1", LS_FOODLOG="vision110_foodlog_v1"; var LS_EXPENSE="vision110_expense_v1";
+var LS_WEIGHT="vision110_weight_v1", LS_HSET="vision110_health_settings_v1", LS_FOODLOG="vision110_foodlog_v1"; var LS_EXPENSE="vision110_expense_v1"; var LS_EARNING="vision110_earning_v1";
 var LS_BIKES="vision110_bikes_v1", LS_ACTIVE_BIKE="vision110_active_bike_v1";
 
 function load(key, fallback){ try{ var v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } }
@@ -1001,7 +1068,7 @@ var SYNC_MAX_BYTES=800000;
 var syncTimer=null, syncInFlight=false, syncInitDoneFor=null, syncStatusText="", lastCloudCheckAt=0, applyingCloud=false, syncRetryTimer=null, syncRetryCount=0;
 function isDataKey(k){
   if(!k) return false;
-  if(k===LS_BIKES||k===LS_ACTIVE_BIKE||k===LS_WEIGHT||k===LS_HSET||k===LS_FOODLOG||k===LS_EXPENSE||k===LS_EXP_NAMES||k===LS_EXP_PAYMENTS) return true;
+  if(k===LS_BIKES||k===LS_ACTIVE_BIKE||k===LS_WEIGHT||k===LS_HSET||k===LS_FOODLOG||k===LS_EXPENSE||k===LS_EXP_NAMES||k===LS_EXP_PAYMENTS||k===LS_EARNING) return true;
   if(k==="vision110_goals_v1") return true;
   return k.indexOf(LS_ODO)===0||k.indexOf(LS_MAINT)===0||k.indexOf(LS_HIST)===0;
 }
@@ -2257,7 +2324,7 @@ if(!ACT_FACTOR[hSettings.activity]) hSettings.activity="light";
 
 var weightEntries = load(LS_WEIGHT, []);
 var editingWeightId = null;
-var pendingWeightPhoto = makePending(); var expenseList = load(LS_EXPENSE, []);
+var pendingWeightPhoto = makePending(); var expenseList = load(LS_EXPENSE, []); var earningList = load(LS_EARNING, []);
 var LS_EXP_NAMES="vision110_expense_names_v1", LS_EXP_PAYMENTS="vision110_expense_payments_v1";
 var expNames=load(LS_EXP_NAMES, []), expPayments=load(LS_EXP_PAYMENTS, []);
 var invoiceDrafts=[];
@@ -2803,8 +2870,9 @@ function initFirebase(){
         fbDb.collection("usernames").where("uid","==",user.uid).limit(1).get().then(function(snap){
           fbUsername = snap.empty ? (user.displayName||"") : snap.docs[0].id;
           renderAccount();
-        }).catch(function(){ fbUsername=user.displayName||""; renderAccount(); });
-      } else { fbUsername=null; renderAccount(); }
+          loadMySharing().then(function(){ return loadMyInvites(); });
+        }).catch(function(){ fbUsername=user.displayName||""; renderAccount(); loadMySharing().then(function(){ return loadMyInvites(); }); });
+      } else { fbUsername=null; viewingOwner=null; sharedExpList=[]; mySharedWith=[]; mySharedWithNames={}; mySharedWithMe=[]; myInvites=[]; myProfile={displayName:"", avatarUrl:""}; renderAccount(); }
     });
     renderAccount();
   };
@@ -2980,7 +3048,7 @@ function buildSyncParts(){
     odo:{odoByBike:ob, odo:ob[DEFAULT_BIKE_ID]||[]},
     maint:{maintByBike:mb, histByBike:hb},
     health:{weight:weightEntries, foodLog:foodLog},
-    expense:{list:expenseList, names:expNames, payments:expPayments}
+    expense:{list:expenseList, names:expNames, payments:expPayments, earnings:earningList}
   };
 }
 function applySyncData(p, updatedAt){
@@ -3005,6 +3073,7 @@ function applySyncData(p, updatedAt){
     var ex=p.expense||{}; if(Array.isArray(ex.list)){ expenseList=ex.list; save(LS_EXPENSE, expenseList); }
     if(Array.isArray(ex.names)){ expNames=ex.names; save(LS_EXP_NAMES, expNames); }
     if(Array.isArray(ex.payments)){ expPayments=ex.payments; save(LS_EXP_PAYMENTS, expPayments); }
+    if(Array.isArray(ex.earnings)){ earningList=ex.earnings; save(LS_EARNING, earningList); }
     expenseList.forEach(function(e){ normalizeExpense(e); });
     applyRepayments(); save(LS_EXPENSE, expenseList);
     refreshPersonSelects();
@@ -3033,6 +3102,7 @@ function syncPendingPhotos(){
   bikes.forEach(function(b){ if(b.id!==activeBikeId) targets.push({list:load(bikeOdoKey(b.id),[]), key:bikeOdoKey(b.id)}); });
   targets.push({list:weightEntries, key:LS_WEIGHT});
   targets.push({list:expenseList, key:LS_EXPENSE});
+  targets.push({list:earningList, key:LS_EARNING});
   targets.push({list:expPayments, key:LS_EXP_PAYMENTS});
   var jobs=[];
   targets.forEach(function(tg){ tg.list.forEach(function(en){ if(en.photoId&&!en.photoUrl) jobs.push({en:en, tg:tg}); }); });
@@ -3993,11 +4063,13 @@ function bindCta(id,sheetId){
 function v51RefreshAccount(){
   var st=document.getElementById("accFaceIdState");
   if(st){ var rec=(typeof faceidRec==="function")?faceidRec():null; st.textContent=rec?"Đã bật":"Chưa bật"; }
+  var ps=document.getElementById("profFaceIdState");
+  if(ps){ var rec2=(typeof faceidRec==="function")?faceidRec():null; ps.textContent=rec2?"Đã bật":"Chưa bật"; }
 }
 function initV51(){
   v51UpdateGradient();
   var menuBtn=document.getElementById("menuBtn");
-  if(menuBtn) menuBtn.addEventListener("click", function(){ v51RefreshAccount(); openSheet("sheet-account"); });
+  if(menuBtn) menuBtn.addEventListener("click", function(){ v51RefreshAccount(); renderProfileSheet(); openSheet("sheet-profile"); loadMySharing().then(function(){ return loadMyInvites(); }).then(function(){ renderProfileSheet(); }); });
   document.querySelectorAll("#view-bike h2.sec").forEach(function(h){ if(h.textContent.trim()==="Log số km") h.classList.add("v51-hide"); });
   document.querySelectorAll("#view-health h2.sec").forEach(function(h){ if(h.textContent.trim()==="Log cân nặng") h.classList.add("v51-hide"); });
   var stats=document.querySelector("#view-bike .stats");
@@ -4085,42 +4157,307 @@ function initV51(){
 
 /* ---------- Chi tiêu ---------- */
 var expKind="chi";
-function expTotals(){ var spent=0, lent=0, unpaid=0; expenseList.forEach(function(e){ var a=+e.amount||0, pa=+e.paidAmount||0; if(e.kind==="vay"){ lent+=a; unpaid+=Math.max(0,a-pa); } else { spent+=a; } }); return {spent:spent, lent:lent, unpaid:unpaid}; }
+function expTotals(){ var spent=0, lent=0, unpaid=0, earn=0; expenseList.forEach(function(e){ var a=+e.amount||0, pa=+e.paidAmount||0; if(e.kind==="vay"){ lent+=a; unpaid+=Math.max(0,a-pa); } else { spent+=a; } }); earningList.forEach(function(g){ earn+=+g.amount||0; }); return {spent:spent, lent:lent, unpaid:unpaid, earn:earn, remain:earn-spent-unpaid, remainFull:earn-spent}; }
+var expFilter=null;
+var vayMode="all";
+function renderExpRow(e){
+  var thumb=e.photoId?'<img class="thumb exp-thumb" data-photo="'+e.photoId+'"'+(e.photoUrl?' data-cloud="'+e.photoUrl+'"':"")+' data-caption="'+esc(e.name)+' · '+fmt(e.amount)+' đ" alt="Ảnh hóa đơn" />':"";
+  var settled=e.kind==="vay" && (+e.amount||0)>0 && (+e.paidAmount||0)>=(+e.amount||0);
+  var dstr=fmtDate(e.date);
+  var sub="";
+  if(e.kind==="vay"){
+    var rem=Math.max(0,(+e.amount||0)-(+e.paidAmount||0));
+    if(settled) sub='<div class="exp-sub">Đã trả hết'+(dstr?' · '+dstr:"")+'</div>';
+    else if((+e.paidAmount||0)>0) sub='<div class="exp-sub">Đã trả '+fmt(e.paidAmount)+' đ · Còn '+fmt(rem)+' đ'+(dstr?' · '+dstr:"")+'</div>';
+    else if(e.person) sub='<div class="exp-sub">Cho vay · '+esc(e.person)+(dstr?' · '+dstr:"")+'</div>';
+    else sub='<div class="exp-sub">'+dstr+'</div>';
+  } else {
+    sub='<div class="exp-sub">'+dstr+'</div>';
+  }
+  var kindBtn='<button type="button" class="exp-kind '+(e.kind==="vay"?"vay":"chi")+'" data-exp-kind="'+e.id+'">'+(e.kind==="vay"?"Cho vay":"Đã chi")+'</button>';
+  var payBtn=e.kind==="vay"?'<button type="button" class="exp-pay '+(e.paid?"paid":"unpaid")+'" data-exp-pay="'+e.id+'" aria-label="'+(e.paid?"Đánh dấu chưa thanh toán":"Đánh dấu đã thanh toán")+'">'+(e.paid?"✓":"✕")+'</button>':"";
+  var detail='<div class="exp-detail">'
+    +'<div class="exp-drow"><span>Ngày</span><b>'+fmtDate(e.date)+'</b></div>'
+    +(e.person?'<div class="exp-drow"><span>Người vay</span><b>'+esc(e.person)+'</b></div>':"")
+    +(thumb?'<div class="exp-dphoto">'+thumb+'</div>':"")
+    +'<div class="exp-dactions">'+payBtn+'<button type="button" class="exp-del2" data-exp-del="'+e.id+'">Xóa khoản này</button></div>'
+    +'</div>';
+  return '<div class="exp-row'+(settled?" settled":"")+'" data-exp-row="'+e.id+'">'
+    +'<div class="exp-swipe"><div class="exp-swipe-content" data-exp-toggle="'+e.id+'">'
+    +'<div class="exp-top">'+kindBtn+'<div class="exp-name" data-exp-kind="'+e.id+'">'+esc(e.name)+'</div><span class="exp-amt mono">'+fmt(e.amount)+' đ</span><span class="exp-chev">›</span></div>'
+    +sub
+    +'</div><button type="button" class="exp-swipe-del" data-exp-del="'+e.id+'">Xóa</button></div>'
+    +detail
+    +'</div>';
+}
+function renderEarnRow(x){
+  var g=x.raw;
+  var thumb=g.photoId?'<img class="thumb exp-thumb" data-photo="'+g.photoId+'"'+(g.photoUrl?' data-cloud="'+g.photoUrl+'"':"")+' data-caption="'+esc(g.name)+' · '+fmt(g.amount)+' đ" alt="Ảnh thu nhập" />':"";
+  var dstr=fmtDate(g.date);
+  var detail='<div class="exp-detail">'
+    +'<div class="exp-drow"><span>Ngày</span><b>'+dstr+'</b></div>'
+    +(thumb?'<div class="exp-dphoto">'+thumb+'</div>':"")
+    +'<div class="exp-dactions"><button type="button" class="exp-del2" data-exp-earn-del="'+g.id+'">Xóa khoản này</button></div>'
+    +'</div>';
+  return '<div class="exp-row" data-exp-row="earn-'+g.id+'">'
+    +'<div class="exp-swipe"><div class="exp-swipe-content" data-exp-toggle="earn-'+g.id+'">'
+    +'<div class="exp-top"><span class="exp-kind thu">Thu nhập</span><div class="exp-name">'+esc(g.name)+'</div><span class="exp-amt mono earn">+'+fmt(g.amount)+' đ</span><span class="exp-chev">›</span></div>'
+    +'<div class="exp-sub">'+dstr+'</div>'
+    +'</div><button type="button" class="exp-swipe-del" data-exp-earn-del="'+g.id+'">Xóa</button></div>'
+    +detail
+    +'</div>';
+}
 function renderExpense(){
+  if(viewingOwner){ renderSharedExpense(); return; }
+  var rl0=document.querySelector(".remain-l"); if(rl0) rl0.textContent="Còn lại";
+  var rfl0=document.getElementById("expStatRemainFullLabel"); if(rfl0) rfl0.textContent="Được trả sẽ còn:";
   var t=expTotals();
-  var a=document.getElementById("expStatSpent"), b=document.getElementById("expStatLent"), c=document.getElementById("expStatUnpaid");
-  if(a) a.textContent=fmt(t.spent)+" đ"; if(b) b.textContent=fmt(t.lent)+" đ"; if(c) c.textContent=fmt(t.unpaid)+" đ";
+  var e0=document.getElementById("expStatEarn"), a=document.getElementById("expStatSpent"), b=document.getElementById("expStatLent"), u=document.getElementById("expStatUnpaidLine"), r=document.getElementById("expStatRemain"), rf=document.getElementById("expStatRemainFull");
+  if(e0) e0.textContent=fmt(t.earn)+" đ"; if(a) a.textContent=fmt(t.spent)+" đ"; if(b) b.textContent=fmt(t.lent)+" đ";
+  if(u) u.textContent="Chưa trả: "+fmt(t.unpaid)+" đ";
+  if(r) r.textContent=fmt(t.remain)+" đ"; if(rf) rf.textContent=fmt(t.remainFull)+" đ";
+  var cE=document.getElementById("chipEarn"), cS=document.getElementById("chipSpent"), cL=document.getElementById("chipLent"), cLL=document.getElementById("chipLentLabel");
+  if(cE) cE.classList.toggle("on", expFilter==="thu");
+  if(cS) cS.classList.toggle("on", expFilter==="chi");
+  if(cL) cL.classList.toggle("on", expFilter==="vay");
+  if(cLL) cLL.textContent = expFilter==="vay" ? (vayMode==="unpaid" ? "Cho vay · Chưa trả" : "Cho vay · Tất cả") : "Cho vay";
   var list=document.getElementById("expList"); if(!list) return;
-  var rows=expenseList.slice().sort(function(x,y){ return x.date>y.date?-1:x.date<y.date?1:y.id-x.id; });
-  if(!rows.length){ list.innerHTML='<div class="empty" style="padding:12px">Chưa có khoản chi nào.</div>'; return; }
-  list.innerHTML=rows.map(function(e,i){
-    var thumb=e.photoId?'<img class="thumb exp-thumb" data-photo="'+e.photoId+'"'+(e.photoUrl?' data-cloud="'+e.photoUrl+'"':"")+' data-caption="'+esc(e.name)+' · '+fmt(e.amount)+' đ" alt="Ảnh hóa đơn" />':"";
-    var settled=e.kind==="vay" && (+e.amount||0)>0 && (+e.paidAmount||0)>=(+e.amount||0);
-    var sub="";
-    if(e.kind==="vay"){
-      var rem=Math.max(0,(+e.amount||0)-(+e.paidAmount||0));
-      if(settled) sub='<div class="exp-sub">Đã trả hết</div>';
-      else if((+e.paidAmount||0)>0) sub='<div class="exp-sub">Đã trả '+fmt(e.paidAmount)+' đ · Còn '+fmt(rem)+' đ</div>';
-      else if(e.person) sub='<div class="exp-sub">Cho vay · '+esc(e.person)+'</div>';
-    }
-    var kindBtn='<button type="button" class="exp-kind '+(e.kind==="vay"?"vay":"chi")+'" data-exp-kind="'+e.id+'">'+(e.kind==="vay"?"Cho vay":"Đã chi")+'</button>';
-    var payBtn=e.kind==="vay"?'<button type="button" class="exp-pay '+(e.paid?"paid":"unpaid")+'" data-exp-pay="'+e.id+'" aria-label="'+(e.paid?"Đánh dấu chưa thanh toán":"Đánh dấu đã thanh toán")+'">'+(e.paid?"✓":"✕")+'</button>':"";
-    var detail='<div class="exp-detail">'
-      +'<div class="exp-drow"><span>Ngày</span><b>'+fmtDate(e.date)+'</b></div>'
-      +(e.person?'<div class="exp-drow"><span>Người vay</span><b>'+esc(e.person)+'</b></div>':"")
-      +(thumb?'<div class="exp-dphoto">'+thumb+'</div>':"")
-      +'<div class="exp-dactions">'+payBtn+'<button type="button" class="exp-del2" data-exp-del="'+e.id+'">Xóa khoản này</button></div>'
-      +'</div>';
-    return '<div class="exp-row'+(settled?" settled":"")+'" data-exp-row="'+e.id+'">'
-      +'<div class="exp-swipe"><div class="exp-swipe-content" data-exp-toggle="'+e.id+'">'
-      +'<div class="exp-top">'+kindBtn+'<div class="exp-name" data-exp-kind="'+e.id+'">'+esc(e.name)+'</div><span class="exp-amt mono">'+fmt(e.amount)+' đ</span><span class="exp-chev">›</span></div>'
-      +sub
-      +'</div><button type="button" class="exp-swipe-del" data-exp-del="'+e.id+'">Xóa</button></div>'
-      +detail
-      +'</div>';
-  }).join("");
+  var items=[];
+  earningList.forEach(function(g){ items.push({t:"thu", id:g.id, name:g.name, amount:g.amount, date:g.date, photoId:g.photoId, photoUrl:g.photoUrl, raw:g}); });
+  expenseList.forEach(function(e){ items.push({t:e.kind==="vay"?"vay":"chi", id:e.id, name:e.name, amount:e.amount, date:e.date, person:e.person, paidAmount:e.paidAmount, paid:e.paid, manualPaid:e.manualPaid, photoId:e.photoId, photoUrl:e.photoUrl, raw:e}); });
+  if(expFilter==="thu") items=items.filter(function(x){ return x.t==="thu"; });
+  else if(expFilter==="chi") items=items.filter(function(x){ return x.t==="chi"; });
+  else if(expFilter==="vay"){ items=items.filter(function(x){ return x.t==="vay"; }); if(vayMode==="unpaid") items=items.filter(function(x){ return Math.max(0,(+x.amount||0)-(+x.paidAmount||0))>0; }); }
+  items.sort(function(x,y){ if(x.date!==y.date) return x.date>y.date?-1:1; return y.id-x.id; });
+  if(!items.length){
+    var msg = expFilter==="thu" ? "Chưa có khoản thu nhập nào." : expFilter==="chi" ? "Chưa có khoản đã chi nào." : expFilter==="vay" ? (vayMode==="unpaid" ? "Không còn khoản vay nào chưa trả." : "Chưa có khoản cho vay nào.") : "Chưa có giao dịch nào.";
+    list.innerHTML='<div class="empty" style="padding:16px;text-align:center">'+msg+'</div>'; return;
+  }
+  list.innerHTML=items.map(function(x){ return x.t==="thu" ? renderEarnRow(x) : renderExpRow(x.raw); }).join("");
   hydrateThumbs(list);
 }
+/* ---------- Chia sẻ sổ chi tiêu ---------- */
+var viewingOwner=null;
+var sharedExpList=[];
+var mySharedWith=[];
+var mySharedWithNames={};
+var mySharedWithMe=[];
+var myInvites=[];
+var myProfile={displayName:"", avatarUrl:""};
+function userDocRef(){ return (fbDb && fbUser && !fbUser.isAnonymous) ? fbDb.collection("users").doc(fbUser.uid) : null; }
+function myNamesForMatch(){
+  var names=[];
+  if(fbUsername) names.push(String(fbUsername).toLowerCase());
+  if(myProfile.displayName) names.push(myProfile.displayName.trim().toLowerCase());
+  if(fbUser && fbUser.displayName) names.push(fbUser.displayName.trim().toLowerCase());
+  return names;
+}
+function isMyLoan(e){
+  var who=normName(e.person||"").toLowerCase().replace(/^@/,"");
+  if(!who) return false;
+  var names=myNamesForMatch();
+  for(var i=0;i<names.length;i++){ if(names[i] && who===names[i].replace(/^@/,"")) return true; }
+  return false;
+}
+function loadMySharing(){
+  var ref=userDocRef(); if(!ref) return Promise.resolve();
+  return ref.get().then(function(doc){
+    var d=doc.exists?doc.data():{};
+    mySharedWith=Array.isArray(d.sharedWith)?d.sharedWith:[];
+    mySharedWithNames=(d.sharedWithNames&&typeof d.sharedWithNames==="object")?d.sharedWithNames:{};
+    mySharedWithMe=Array.isArray(d.sharedWithMe)?d.sharedWithMe:[];
+    myProfile.displayName=d.displayName||"";
+    myProfile.avatarUrl=d.avatarUrl||"";
+  }).catch(function(){});
+}
+function loadMyInvites(){
+  if(!fbDb || !fbUser || fbUser.isAnonymous){ myInvites=[]; return Promise.resolve(); }
+  return fbDb.collection("invites").where("toUid","==",fbUser.uid).where("status","==","pending").get().then(function(snap){
+    myInvites=[];
+    snap.forEach(function(doc){ var d=doc.data(); d.id=doc.id; myInvites.push(d); });
+  }).catch(function(){ myInvites=[]; });
+}
+function renderSharedExpense(){
+  var lent=0, unpaid=0;
+  sharedExpList.forEach(function(e){ var a=+e.amount||0, pa=+e.paidAmount||0; lent+=a; unpaid+=Math.max(0,a-pa); });
+  var e0=document.getElementById("expStatEarn"), a=document.getElementById("expStatSpent"), b=document.getElementById("expStatLent"), u=document.getElementById("expStatUnpaidLine"), r=document.getElementById("expStatRemain"), rf=document.getElementById("expStatRemainFull");
+  if(e0) e0.textContent="—"; if(a) a.textContent="—"; if(b) b.textContent=fmt(lent)+" đ";
+  if(u) u.textContent="Chưa trả: "+fmt(unpaid)+" đ";
+  if(r) r.textContent=fmt(unpaid)+" đ"; if(rf) rf.textContent=fmt(lent)+" đ";
+  var rl=document.querySelector(".remain-l"); if(rl) rl.textContent="Còn nợ";
+  var rfl=document.getElementById("expStatRemainFullLabel"); if(rfl) rfl.textContent="Tổng đã vay:";
+  var cE=document.getElementById("chipEarn"), cS=document.getElementById("chipSpent"), cL=document.getElementById("chipLent"), cLL=document.getElementById("chipLentLabel");
+  if(cE) cE.classList.toggle("on", expFilter==="thu");
+  if(cS) cS.classList.toggle("on", expFilter==="chi");
+  if(cL) cL.classList.toggle("on", expFilter==="vay");
+  if(cLL) cLL.textContent = expFilter==="vay" ? (vayMode==="unpaid" ? "Cho vay · Chưa trả" : "Cho vay · Tất cả") : "Cho vay";
+  var list=document.getElementById("expList"); if(!list) return;
+  var items=sharedExpList.slice();
+  if(expFilter==="thu" || expFilter==="chi") items=[];
+  else if(expFilter==="vay" && vayMode==="unpaid") items=items.filter(function(x){ return Math.max(0,(+x.amount||0)-(+x.paidAmount||0))>0; });
+  items.sort(function(x,y){ if(x.date!==y.date) return x.date>y.date?-1:1; return y.id-x.id; });
+  if(!items.length){
+    list.innerHTML='<div class="empty" style="padding:16px;text-align:center">'+(expFilter==="thu"||expFilter==="chi"?"Sổ được chia sẻ chỉ hiện các khoản vay của anh.":"Không có khoản vay nào của anh trong sổ này.")+'</div>'; return;
+  }
+  list.innerHTML=items.map(function(e){ return renderSharedRow(e); }).join("");
+  hydrateThumbs(list);
+}
+function renderSharedRow(e){
+  var thumb=e.photoId?'<img class="thumb exp-thumb" data-photo="'+e.photoId+'"'+(e.photoUrl?' data-cloud="'+e.photoUrl+'"':"")+' data-caption="'+esc(e.name)+' · '+fmt(e.amount)+' đ" alt="Ảnh hóa đơn" />':"";
+  var settled=(+e.amount||0)>0 && (+e.paidAmount||0)>=(+e.amount||0);
+  var rem=Math.max(0,(+e.amount||0)-(+e.paidAmount||0));
+  var dstr=fmtDate(e.date);
+  var sub= settled ? '<div class="exp-sub">Đã trả hết'+(dstr?' · '+dstr:"")+'</div>' : ((+e.paidAmount||0)>0 ? '<div class="exp-sub">Đã trả '+fmt(e.paidAmount)+' đ · Còn '+fmt(rem)+' đ'+(dstr?' · '+dstr:"")+'</div>' : '<div class="exp-sub">Cho vay · '+esc(e.person||"")+(dstr?' · '+dstr:"")+'</div>');
+  var detail='<div class="exp-detail">'
+    +'<div class="exp-drow"><span>Ngày</span><b>'+dstr+'</b></div>'
+    +(e.person?'<div class="exp-drow"><span>Người vay</span><b>'+esc(e.person)+'</b></div>':"")
+    +(thumb?'<div class="exp-dphoto">'+thumb+'</div>':"")
+    +'</div>';
+  return '<div class="exp-row'+(settled?" settled":"")+'" data-exp-row="shared-'+e.id+'">'
+    +'<div data-exp-toggle="shared-'+e.id+'">'
+    +'<div class="exp-top"><span class="exp-kind vay">Cho vay</span><div class="exp-name">'+esc(e.name)+'</div><span class="exp-amt mono">'+fmt(e.amount)+' đ</span><span class="exp-chev">›</span></div>'
+    +sub
+    +'</div>'
+    +detail
+    +'</div>';
+}
+function updateExpViewMode(){
+  var banner=document.getElementById("expViewBanner");
+  var bname=document.getElementById("expViewBannerName");
+  var ctaE=document.getElementById("ctaExpense"), ctaR=document.getElementById("ctaRepay");
+  if(viewingOwner){
+    if(banner) banner.hidden=false;
+    if(bname) bname.textContent="@"+(viewingOwner.username||"");
+    if(ctaE) ctaE.style.display="none";
+    if(ctaR) ctaR.style.display="none";
+  } else {
+    if(banner) banner.hidden=true;
+    if(ctaE) ctaE.style.display="";
+    if(ctaR) ctaR.style.display="";
+  }
+}
+function switchLedger(uid){
+  if(!uid || uid==="mine"){ viewingOwner=null; sharedExpList=[]; expFilter=null; vayMode="all"; updateExpViewMode(); renderExpense(); closeSheet(); return; }
+  var o=null; mySharedWithMe.forEach(function(x){ if(x.uid===uid) o=x; });
+  if(!o) return;
+  if(!fbDb){ toast("Cần mạng để xem sổ được chia sẻ."); return; }
+  fbDb.collection("users").doc(o.uid).collection("backup").doc("sync_expense").get().then(function(doc){
+    if(!doc.exists){ toast("Sổ của @"+(o.username||"")+" chưa có dữ liệu chi tiêu."); return; }
+    var data=doc.data().data||{};
+    var list=Array.isArray(data.list)?data.list:[];
+    sharedExpList=list.filter(function(e){ return e.kind==="vay" && isMyLoan(e); });
+    viewingOwner=o;
+    expFilter=null; vayMode="all";
+    updateExpViewMode();
+    renderExpense();
+    closeSheet();
+    toast("Đang xem sổ của @"+(o.username||"")+" (chỉ xem)");
+  }).catch(function(err){
+    toast(err&&err.code==="permission-denied"?"Chưa xem được sổ này (cần cập nhật Firestore rules).":"Không tải được sổ được chia sẻ.");
+  });
+}
+function inviteUsername(){
+  var inp=document.getElementById("profInviteUser"); var msg=document.getElementById("profInviteMsg");
+  var name=(inp?inp.value:"").trim().toLowerCase();
+  if(!name){ if(msg) msg.textContent="Anh nhập username trước nhé."; return; }
+  if(!fbDb || !fbUser || fbUser.isAnonymous){ if(msg) msg.textContent="Cần đăng nhập tài khoản có username mới mời được."; return; }
+  if(name===(fbUsername||"").toLowerCase()){ if(msg) msg.textContent="Đây là username của anh rồi."; return; }
+  if(msg) msg.textContent="Đang tìm...";
+  fbDb.collection("usernames").doc(name).get().then(function(doc){
+    if(!doc.exists) throw new Error("Không tìm thấy username này.");
+    var toUid=doc.data().uid;
+    if(!toUid) throw new Error("Username này chưa gắn tài khoản.");
+    if(mySharedWith.indexOf(toUid)>=0) throw new Error("Anh đã chia sẻ với @"+name+" rồi.");
+    return fbDb.collection("invites").add({fromUid:fbUser.uid, fromUsername:fbUsername||"", toUid:toUid, toUsername:name, status:"pending", createdAt:new Date().toISOString()}).then(function(){
+      var ref=userDocRef();
+      var sw=mySharedWith.slice(); sw.push(toUid);
+      var names={}; Object.keys(mySharedWithNames).forEach(function(k){ names[k]=mySharedWithNames[k]; }); names[toUid]=name;
+      return ref.set({sharedWith:sw, sharedWithNames:names},{merge:true}).then(function(){
+        mySharedWith=sw; mySharedWithNames=names;
+        if(inp) inp.value="";
+        if(msg) msg.textContent="Đã gửi lời mời cho @"+name+". Họ chấp nhận là xem được sổ của anh.";
+        renderProfileSheet();
+      });
+    });
+  }).catch(function(err){
+    var m=(err&&err.message)||"Không gửi được lời mời.";
+    if(err&&err.code==="permission-denied") m="Chia sẻ chưa bật trên Firebase (cần cập nhật Firestore rules).";
+    if(msg) msg.textContent=m;
+  });
+}
+function acceptInvite(id){
+  var iv=null; myInvites.forEach(function(x){ if(x.id===id) iv=x; });
+  if(!iv || !fbDb) return;
+  fbDb.collection("invites").doc(id).update({status:"accepted"}).then(function(){
+    var ref=userDocRef();
+    var list=mySharedWithMe.slice();
+    if(!list.some(function(o){ return o.uid===iv.fromUid; })) list.push({uid:iv.fromUid, username:iv.fromUsername||""});
+    return ref.set({sharedWithMe:list},{merge:true}).then(function(){
+      mySharedWithMe=list;
+      myInvites=myInvites.filter(function(x){ return x.id!==id; });
+      renderProfileSheet();
+      toast("Đã chấp nhận chia sẻ từ @"+(iv.fromUsername||""));
+    });
+  }).catch(function(err){ toast(err&&err.code==="permission-denied"?"Chia sẻ chưa bật trên Firebase (cần cập nhật Firestore rules).":"Không chấp nhận được lời mời."); });
+}
+function declineInvite(id){
+  if(!fbDb) return;
+  fbDb.collection("invites").doc(id).update({status:"declined"}).then(function(){
+    myInvites=myInvites.filter(function(x){ return x.id!==id; });
+    renderProfileSheet();
+  }).catch(function(){});
+}
+function revokeShare(uid){
+  var ref=userDocRef(); if(!ref) return;
+  var sw=mySharedWith.filter(function(x){ return x!==uid; });
+  var names={}; Object.keys(mySharedWithNames).forEach(function(k){ if(k!==uid) names[k]=mySharedWithNames[k]; });
+  ref.set({sharedWith:sw, sharedWithNames:names},{merge:true}).then(function(){
+    mySharedWith=sw; mySharedWithNames=names;
+    renderProfileSheet();
+    toast("Đã thu hồi quyền xem sổ");
+  }).catch(function(err){ toast(err&&err.code==="permission-denied"?"Chia sẻ chưa bật trên Firebase (cần cập nhật Firestore rules).":"Không thu hồi được."); });
+}
+function renderProfileSheet(){
+  var av=document.getElementById("profAvatar"), nm=document.getElementById("profName"), sb=document.getElementById("profSub");
+  var uname=fbUsername||(fbUser&&fbUser.displayName)||"";
+  var disp=myProfile.displayName||(fbUser&&fbUser.displayName)||uname;
+  if(av){
+    if(myProfile.avatarUrl) av.innerHTML='<img src="'+myProfile.avatarUrl+'" alt="Avatar" />';
+    else av.textContent=((disp||"?").trim().charAt(0).toUpperCase()||"?");
+  }
+  if(nm) nm.textContent="@"+(uname||"...");
+  if(sb) sb.textContent=((disp && disp!==uname) ? disp+" · " : "")+(fbUser&&fbUser.email?fbUser.email:"");
+  var dn=document.getElementById("profDisplayName"); if(dn && !dn.value) dn.value=myProfile.displayName||"";
+  var acc=document.getElementById("profAccounts");
+  if(acc){
+    var html='<button type="button" class="prof-acc'+(!viewingOwner?" on":"")+'" data-prof-acc="mine"><span class="nm">Của tôi</span><span class="tag">'+(viewingOwner?"":"đang xem")+'</span></button>';
+    mySharedWithMe.forEach(function(o){
+      html+='<button type="button" class="prof-acc'+(viewingOwner&&viewingOwner.uid===o.uid?" on":"")+'" data-prof-acc="'+o.uid+'"><span class="nm">@'+esc(o.username||"")+'</span><span class="tag">'+(viewingOwner&&viewingOwner.uid===o.uid?"đang xem":"chỉ xem")+'</span></button>';
+    });
+    if(!mySharedWithMe.length) html+='<div class="hint">Chưa có ai chia sẻ sổ với anh.</div>';
+    acc.innerHTML=html;
+  }
+  var invSec=document.getElementById("profInvitesSec"), invBox=document.getElementById("profInvites");
+  if(invSec && invBox){
+    if(myInvites.length){
+      invSec.hidden=false;
+      invBox.innerHTML=myInvites.map(function(iv){
+        return '<div class="prof-row"><span class="nm">@'+esc(iv.fromUsername||"")+' muốn chia sẻ sổ chi tiêu với anh</span><button type="button" class="btn btn-ghost btn-sm" data-inv-accept="'+iv.id+'">Chấp nhận</button><button type="button" class="btn btn-ghost btn-sm" data-inv-decline="'+iv.id+'">Từ chối</button></div>';
+      }).join("");
+    } else { invSec.hidden=true; invBox.innerHTML=""; }
+  }
+  var shSec=document.getElementById("profSharedSec"), shBox=document.getElementById("profShared");
+  if(shSec && shBox){
+    if(mySharedWith.length){
+      shSec.hidden=false;
+      shBox.innerHTML=mySharedWith.map(function(uid){
+        var un=mySharedWithNames[uid]||uid;
+        return '<div class="prof-row"><span class="nm">@'+esc(un)+'</span><button type="button" class="btn btn-ghost btn-sm" data-revoke="'+uid+'">Thu hồi</button></div>';
+      }).join("");
+    } else { shSec.hidden=true; shBox.innerHTML=""; }
+  }
+}
+
 var pendingBorrowerId=null;
 function toggleExpKind(id){
   var it=null;
@@ -4352,6 +4689,13 @@ function renderInvoiceDrafts(){
   var btn=document.getElementById("expSubmitBtn");
   var has=invoiceDrafts.length>0;
   var nw=document.getElementById("expNameWrap"), aw=document.getElementById("expAmountWrap");
+  if(expKind==="thu"){
+    if(nw) nw.hidden=false;
+    if(aw) aw.hidden=false;
+    if(btn) btn.textContent="Lưu thu nhập";
+    box.innerHTML = has ? '<div class="inv-status">Đã đính kèm '+invoiceDrafts.length+' ảnh</div>' : "";
+    return;
+  }
   if(nw) nw.hidden=has;
   if(aw) aw.hidden=has;
   if(!has){ box.innerHTML=""; if(btn) btn.textContent="Lưu khoản chi"; return; }
@@ -4415,6 +4759,9 @@ function resetExpForm(){
   document.getElementById("expAmount").value="";
   document.getElementById("expDate").value=todayStr();
   expKind="chi";
+  var t=document.getElementById("expSheetTitle"); if(t) t.textContent="Thêm khoản chi";
+  var pb=document.getElementById("expPhotoBtn"); if(pb) pb.textContent="Chụp / chọn ảnh hóa đơn (nhiều ảnh)";
+  var oc=document.getElementById("expOcrStatus"); if(oc) oc.style.display="";
   document.querySelectorAll("#expKindBtns button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-kind")==="chi"); });
   document.getElementById("expPerson").value="";
   document.getElementById("expPersonRow").hidden=true;
@@ -4424,20 +4771,44 @@ function resetExpForm(){
   setOcrStatus("expOcrStatus","");
 }
 document.getElementById("ctaExpense").addEventListener("click", function(){ resetExpForm(); openSheet("sheet-expense"); });
+document.querySelectorAll(".exp-stats [data-exp-filter]").forEach(function(chip){
+  chip.addEventListener("click", function(){
+    var f=chip.getAttribute("data-exp-filter");
+    if(f==="vay"){
+      if(expFilter!=="vay"){ expFilter="vay"; vayMode="all"; }
+      else if(vayMode==="all"){ vayMode="unpaid"; }
+      else { expFilter=null; vayMode="all"; }
+    } else {
+      expFilter = (expFilter===f) ? null : f;
+    }
+    renderExpense();
+  });
+});
 document.getElementById("ctaRepay").addEventListener("click", function(){ resetRepayForm(); renderRepayList(); openSheet("sheet-repay"); });
 document.getElementById("expKindBtns").addEventListener("click", function(e){
   var b=e.target.closest("button[data-kind]"); if(!b) return;
   expKind=b.getAttribute("data-kind");
   document.querySelectorAll("#expKindBtns button").forEach(function(x){ x.classList.toggle("on", x===b); });
   document.getElementById("expPersonRow").hidden=expKind!=="vay";
+  var t=document.getElementById("expSheetTitle"); if(t) t.textContent = expKind==="thu" ? "Thêm thu nhập" : "Thêm khoản chi";
+  var pb=document.getElementById("expPhotoBtn"); if(pb) pb.textContent = expKind==="thu" ? "Chụp / chọn ảnh (chuyển khoản / biên lai)" : "Chụp / chọn ảnh hóa đơn (nhiều ảnh)";
+  var oc=document.getElementById("expOcrStatus"); if(oc) oc.style.display = expKind==="thu" ? "none" : "";
+  renderInvoiceDrafts();
 });
+function processEarnPhotos(){
+  invoiceDrafts.forEach(function(d){
+    if(d.done || !d.file) return;
+    d.done=true;
+    processPhoto(d.file).then(function(blob){ setPending(d.pending, blob); d.file=null; renderInvoiceDrafts(); });
+  });
+}
 document.getElementById("expPhotoBtn").addEventListener("click", function(){ document.getElementById("expPhoto").click(); });
 document.getElementById("expPhoto").addEventListener("change", function(){
   var files=this.files?Array.prototype.slice.call(this.files):[]; this.value="";
   if(!files.length) return;
   files.forEach(function(f){ invoiceDrafts.push({pending:makePending(), name:"", amount:0, status:"Đang chờ nhận diện…", done:false, file:f}); });
   renderInvoiceDrafts();
-  processInvoiceDrafts();
+  if(expKind==="thu") processEarnPhotos(); else processInvoiceDrafts();
 });
 document.getElementById("expInvoiceList").addEventListener("click", function(e){
   var del=e.target.closest("[data-inv-del]"); if(!del) return;
@@ -4453,6 +4824,23 @@ document.getElementById("expenseForm").addEventListener("submit", function(ev){
   var person=normName(document.getElementById("expPerson").value);
   var kind=expKind;
   if(!date){ toast("Anh chọn ngày đã nhé"); return; }
+  if(kind==="thu"){
+    var mName=document.getElementById("expName").value.trim();
+    var mAmt=parseKm(document.getElementById("expAmount").value);
+    if(!mName || isNaN(mAmt)){ toast("Anh nhập tên với số tiền nhé"); return; }
+    var iblob=null;
+    invoiceDrafts.forEach(function(d){ if(!iblob && d.pending && d.pending.blob) iblob=d.pending.blob; });
+    var saveEarn=function(pid, pts){
+      var g={id:Date.now(), name:mName, amount:Math.round(mAmt), date:date, ts:new Date().toISOString()};
+      if(pid){ g.photoId=pid; g.photoTs=pts; }
+      earningList.unshift(g);
+      save(LS_EARNING, earningList);
+      resetExpForm(); renderExpense(); closeSheet(); toast("Đã lưu thu nhập");
+    };
+    if(iblob){ storePending({blob:iblob, ts:new Date().toISOString(), url:null},"earning").then(function(r){ saveEarn(r?r.id:null, r?r.ts:null); }); }
+    else saveEarn(null,null);
+    return;
+  }
   syncDraftInputs();
   var entries=[];
   invoiceDrafts.forEach(function(d){
@@ -4492,6 +4880,8 @@ document.getElementById("expList").addEventListener("click", function(e){
   if(kind){ toggleExpKind(+kind.getAttribute("data-exp-kind")); return; }
   var pay=e.target.closest("[data-exp-pay]");
   if(pay){ var id=+pay.getAttribute("data-exp-pay"); var changed=false; expenseList.forEach(function(x){ if(x.id===id){ if((+x.paidAmount||0)>=(+x.amount||0)){ if(x.manualPaid){ x.manualPaid=false; changed=true; } else { toast("Món này đã trừ từ tiền trả lại, anh xóa khoản trả tiền để hoàn tác nhé"); } } else { x.manualPaid=true; changed=true; } } }); if(changed){ applyRepayments(); save(LS_EXPENSE, expenseList); renderExpense(); } return; }
+  var edel=e.target.closest("[data-exp-earn-del]");
+  if(edel){ var eid=+edel.getAttribute("data-exp-earn-del"); var eg=null; earningList.forEach(function(x){ if(x.id===eid) eg=x; }); if(eg&&eg.photoId){ deletePhotoFromCloud(eg.photoId); idbDel(eg.photoId); delete photoURLCache[eg.photoId]; } earningList=earningList.filter(function(x){ return x.id!==eid; }); save(LS_EARNING, earningList); renderExpense(); toast("Đã xóa khoản thu nhập"); return; }
   var del=e.target.closest("[data-exp-del]");
   if(del){ var id2=+del.getAttribute("data-exp-del"); var en=null; expenseList.forEach(function(x){ if(x.id===id2) en=x; }); if(en&&en.photoId){ deletePhotoFromCloud(en.photoId); idbDel(en.photoId); delete photoURLCache[en.photoId]; } expenseList=expenseList.filter(function(x){ return x.id!==id2; }); save(LS_EXPENSE, expenseList); renderExpense(); toast("Đã xóa khoản chi"); return; }
   var tog=e.target.closest("[data-exp-toggle]");
@@ -4503,6 +4893,58 @@ document.getElementById("expList").addEventListener("click", function(e){
     row.classList.toggle("open");
   }
 });
+/* ---------- Profile sheet wiring ---------- */
+document.getElementById("profEditBtn").addEventListener("click", function(){
+  var box=document.getElementById("profEditBox"); if(!box) return;
+  box.hidden=!box.hidden;
+  if(!box.hidden){ var dn=document.getElementById("profDisplayName"); if(dn) dn.value=myProfile.displayName||""; }
+});
+document.getElementById("profAvatarBtn").addEventListener("click", function(){ document.getElementById("profAvatarFile").click(); });
+document.getElementById("profAvatarFile").addEventListener("change", function(){
+  var f=this.files&&this.files[0]; this.value="";
+  if(!f) return;
+  if(!photoStorage() || !fbUser || fbUser.isAnonymous){ toast("Cần đăng nhập mới đổi được ảnh đại diện."); return; }
+  processPhoto(f).then(function(blob){
+    var ref=photoStorage().ref("users/"+fbUser.uid+"/photos/avatar.jpg");
+    return ref.put(blob,{contentType:"image/jpeg"}).then(function(snap){ return snap.ref.getDownloadURL(); });
+  }).then(function(url){
+    myProfile.avatarUrl=url;
+    var r=userDocRef(); if(r) r.set({avatarUrl:url},{merge:true}).catch(function(){});
+    renderProfileSheet();
+    toast("Đã đổi ảnh đại diện");
+  }).catch(function(){ toast("Không tải được ảnh đại diện."); });
+});
+document.getElementById("profSaveBtn").addEventListener("click", function(){
+  var dn=document.getElementById("profDisplayName");
+  var name=dn?dn.value.trim():"";
+  var done=function(){
+    myProfile.displayName=name;
+    document.getElementById("profEditBox").hidden=true;
+    renderProfileSheet(); renderAccount();
+    toast("Đã lưu profile");
+  };
+  var ref=userDocRef();
+  var p1 = (fbUser && fbUser.updateProfile) ? fbUser.updateProfile({displayName:name||null}).catch(function(){}) : Promise.resolve();
+  var p2 = ref ? ref.set({displayName:name},{merge:true}).catch(function(){}) : Promise.resolve();
+  Promise.all([p1,p2]).then(done);
+});
+document.getElementById("profAccounts").addEventListener("click", function(e){
+  var b=e.target.closest("[data-prof-acc]"); if(!b) return;
+  switchLedger(b.getAttribute("data-prof-acc"));
+});
+document.getElementById("profInviteBtn").addEventListener("click", function(){ inviteUsername(); });
+document.getElementById("profInvites").addEventListener("click", function(e){
+  var a=e.target.closest("[data-inv-accept]"); if(a){ acceptInvite(a.getAttribute("data-inv-accept")); return; }
+  var d=e.target.closest("[data-inv-decline]"); if(d){ declineInvite(d.getAttribute("data-inv-decline")); return; }
+});
+document.getElementById("profShared").addEventListener("click", function(e){
+  var r=e.target.closest("[data-revoke]"); if(r){ revokeShare(r.getAttribute("data-revoke")); }
+});
+document.getElementById("profSettingsBtn").addEventListener("click", function(){ openSheet("sheet-settings"); });
+document.getElementById("profFaceIdBtn").addEventListener("click", function(){ var b=document.getElementById("faceidEnableBtn"); if(b) b.click(); });
+document.getElementById("profLogoutBtn").addEventListener("click", function(){ var b=document.getElementById("logoutBtn"); if(b) b.click(); });
+document.getElementById("expViewBackBtn").addEventListener("click", function(){ switchLedger("mine"); });
+
 var expSwipe={row:null,content:null,startX:0,startY:0,curX:0,open:false,moved:false};
 function expSwipeCloseAll(except){
   document.querySelectorAll("#expList .exp-row.swiped-open").forEach(function(r){
